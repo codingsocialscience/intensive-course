@@ -1,0 +1,129 @@
+---
+title: Data science - text analysis
+output: html_document
+---
+
+# Data science - text analysis
+
+Data science tools allow classifying data into groups, either using examples to support in classification (_supervised_ machine learning) or usign statistical analysis on word-level similarities (_unsupervised_ machine learning).
+
+To get a grasp of these methods, see SICSS videos on [dictionary-based methods](https://www.youtube.com/watch?v=wSIi2ZRKjaE) and [topic models](https://www.youtube.com/watch?v=IUAHUEy1V0Q).
+
+We learn how to
+1. read and transform text data into something computers can work on (using [quanteda](https://quanteda.io/))
+1. conduct a supervised machine learning task on the data (i.e., teaching from examples)
+1. conduct an unsupervised machine learning task on the data
+
+## Reading data with quanteda
+
+Quanteda is a popular library for computational text analysis, supporing various pre-processing and data management tasks common for text-based data.
+We first need to transform the textual material as a _corpus_ to make workable as a computational data source.
+After this we extract the document-term matrix from the data, ensuring that common English stopwords are excluded and words are stemmed before further analysis.
+
+```{r}
+data <- read.csv('./data/ExtractedTweets.csv', stringsAsFactors = FALSE )
+data <- data[ sample(1:nrow(data), size = 500, replace=FALSE), ] ## dataset is fairly large, let's work with a smaller dataset
+```
+
+```{r}
+library("quanteda")
+```
+
+```{r}
+data.corpus <- corpus( data, text_field = "Tweet" )
+data.tokens <- tokens( data.corpus, remove_punct = TRUE, remove_symbols = TRUE, remove_numbers = TRUE )
+```
+
+```{r}
+documenttermmatrix <- dfm( data.tokens )
+documenttermmatrix <- dfm_remove( documenttermmatrix, pattern = stopwords("english") ) ## remove common english words which often do not help in analysis
+documenttermmatrix <- dfm_wordstem( documenttermmatrix )
+```
+
+```{r}
+hist( featfreq( documenttermmatrix ) ) ## most words are used just a few times (x-axis: how many times userd, y-axis: frequenxcy in the class)
+```
+
+## Supervised machine learning
+
+The gist of supervised machine learning is teaching computers to classify based on examples:
+for example, showing the computer several examples of Republican tweets and Democratic tweets should allow computer to classify previously unseen tweet into either parties.
+
+`quanteda.textmodels` is a [package](https://cran.r-project.org/web/packages/quanteda.textmodels/quanteda.textmodels.pdf) spesically tuned for doing text classifications and is fairly easy to use, with a helpful [tutorial] as well.
+
+```{r}
+library(quanteda.textmodels)
+library(caret)
+```
+
+```{r}
+class <- docvars( documenttermmatrix )$Party
+table( class )
+```
+
+```{r}
+model.nb <- textmodel_nb(documenttermmatrix, class )
+summary( model.nb )
+```
+
+## Accuracy
+
+All accuracy-based evaluations focus on comparing actual classifications we know are correct with predicted classifications.
+This allows us to computer accuracy %, Kappa-values as well as confusion matrixes.
+
+```{r}
+actual_class <- class
+predicted_class <- predict( model.nb , newdata = documenttermmatrix )
+tab_class <- table(actual_class, predicted_class)
+
+confusionMatrix(tab_class, mode = "everything")
+```
+
+## Exercises
+
+* Increase the sample to 5000 Tweets and redo the analysis
+* Instead of using the sampled tweets to compute the accuracy, choose another 2500 Tweets from the data and compute accuracy metrics with them. (Thus, you have now taken two different samples from the data, one for _training_ the data and another for _testing_ or validating how well the trained dataset works with unseen data. See [Wikipedia](https://en.wikipedia.org/wiki/Training,_validation,_and_test_sets) for detailed information.)
+* Try out other machine learning method, support vector machines. Which one produces higher quality of results?
+
+## Unsupervised machine learning
+
+Unlike in supervised machine learning, in unsupervised machine learning the classification groups emerge from statistical analysis based on data.
+There are various different ways to achive this, ranging from latent semantical scaling and $k$-means to topic models.
+Each of them produces somewhat different results and at least I am not aware of any best practices on how to choose which method to use.
+
+Next we look at topic models using `stm` package ([documentation](https://rdocumentation.org/packages/stm/), [example](https://github.com/bstewart/stm/blob/master/vignettes/stmVignette.pdf?raw=true)).
+
+```{r}
+## load data
+
+library(quanteda)
+
+data <- read.csv('./data/ExtractedTweets.csv', stringsAsFactors = FALSE )
+data <- data[ sample(1:nrow(data), size = 500, replace=FALSE), ] ## dataset is fairly large, let's work with a smaller dataset  
+
+data.corpus <- corpus( data, text_field = "Tweet" )
+data.tokens <- tokens( data.corpus, remove_punct = TRUE, remove_symbols = TRUE, remove_numbers = TRUE )
+
+documenttermmatrix <- dfm( data.tokens )
+documenttermmatrix <- dfm_remove( documenttermmatrix, pattern = stopwords("english") ) ## remove common english words which often do not help in analysis
+documenttermmatrix <- dfm_wordstem( documenttermmatrix )
+```
+
+```{r}
+library(stm)
+stm.data  <- convert( documenttermmatrix , to = "stm")
+```
+
+```{r}
+model.stm <- stm( stm.data$documents, stm.data$vocab, K = 5, data = stm.data$meta )
+```
+
+```{r}
+summary( model.stm )
+```
+
+## Exercises
+* Vary the number of topics (parameter `K`in the code above) and re-run the analysis. What kind of differences can you detect?
+* Are you happy with words used in the analysis? Remove additional words if nececcarily.
+* From the vignette, look how to do an effect plot to identify how Republicans and Democrats differ across all topics. Are there topics which have a clear difference?
+

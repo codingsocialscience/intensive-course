@@ -1,0 +1,54 @@
+---
+title: Libraries (R).ipynb
+output: html_document
+---
+
+# Libraries
+
+Instead of inventing everything from ground up, developers use software libraries (or packages) to utilise commonly used functionalities.
+Libraries have functions (in some programming languages, methods) which take an input and conduct operations to achieve the expected output.
+The input is series of parameters described in the method documentation, a written text which spesifies how the library should be used.
+
+## Installing libraries
+
+Before you can use a library, it needs to be installed into your system.
+We now install [ggplot2](https://ggplot2.tidyverse.org/), a popular library for plotting data.
+
+```{r}
+install.packages("ggplot2", repos = "http://cran.us.r-project.org") ## this installs the package to your computer
+```
+
+## Taking the library into use
+
+After an library has been installed, you need to take it into use: state that you want to use this library.
+After that you can use the functions spesified in [the documentation](https://ggplot2.tidyverse.org/reference/index.html).
+Often documentation is supplemented by [examples](https://ggplot2.tidyverse.org/#usage) and for often used libraries, Google will also prove answers to many more spesific questions.
+
+The library includes a dataset `mpg` including details on the fuel econonomy of various cars ([see more](https://ggplot2.tidyverse.org/reference/mpg.html)).
+We use it in the next examples to have an easy to use dataset available for these exercises.
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point()
+```
+
+```{r}
+head( mpg )
+```
+
+```{r}
+## using geom_bar to produce bar chart
+ggplot( mpg , aes( manufacturer ) ) + 
+  geom_bar()
+```
+
+# Exercises
+
+* Visualise the various transistion models of cars in `mpg` using a bar chart.
+* Visualise the production years of the cars in `mpg` using [a histogram](https://ggplot2.tidyverse.org/reference/geom_histogram.html).
+* Visualise the production years per model of the cars in `mpg` using a frequency polygon.
+
