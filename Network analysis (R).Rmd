@@ -1,17 +1,21 @@
 ---
 title: Network analysis (R)
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 # Network analysis
 
-Network analysis focuses on seeing the world via nodes and ties between nodes.
-It can be used for various purposes, ranging from [textual data](https://sicss.io/2020/materials/day3-text-analysis/text-networks/rmarkdown/Text_Networks.html) to analysis of [sexual relationships in a high school](https://people.duke.edu/~jmoody77/chains.pdf).
+Network analysis focuses on seeing the world via nodes and ties between
+nodes. It can be used for various purposes, ranging from [textual
+data](https://sicss.io/2020/materials/day3-text-analysis/text-networks/rmarkdown/Text_Networks.html)
+to analysis of [sexual relationships in a high
+school](https://people.duke.edu/~jmoody77/chains.pdf).
 
-Now we learn how to
-* read data in as a network
-* visualise network
-* compute various network characteristics
+Now we learn how to \* read data in as a network \* visualise network \*
+compute various network characteristics
 
 For this, we use the package [igraph](https://igraph.org/r/).
 
@@ -30,7 +34,8 @@ network <- graph_from_adjacency_matrix( matrix, 'directed' )
 
 ## Computing network characteristics
 
-There are various measurements which can be executed both at the level of individual nodes as well as at the level of the whole network.
+There are various measurements which can be executed both at the level
+of individual nodes as well as at the level of the whole network.
 
 ```{r}
 degree( network )
@@ -40,16 +45,21 @@ hist( degree( network ) )
 
 ## Exercises
 
-* Instead of this ugly histogram, use `ggplot` to draw a nice histogram.
-* Instead of degree use [betweness](https://igraph.org/r/doc/betweenness.html) metrics.
-* Do degree and betweness correlate?
-* What is the diameter of the network?
+-   Instead of this ugly histogram, use `ggplot` to draw a nice
+    histogram.
+-   Instead of degree use
+    [betweness](https://igraph.org/r/doc/betweenness.html) metrics.
+-   Do degree and betweness correlate?
+-   What is the diameter of the network?
 
 ## Plotting networks
 
-Often network analysis is done through drawing the network.
-Here we learn how to twist the drawing by changing node attributes, tie attributes as well as the [layout of the graph](https://igraph.org/r/doc/layout_.html).
-See [documentation](https://igraph.org/r/doc/plot.common.html) for various alternatives you can use.
+Often network analysis is done through drawing the network. Here we
+learn how to twist the drawing by changing node attributes, tie
+attributes as well as the [layout of the
+graph](https://igraph.org/r/doc/layout_.html). See
+[documentation](https://igraph.org/r/doc/plot.common.html) for various
+alternatives you can use.
 
 ```{r}
 plot( network )
@@ -66,3 +76,37 @@ l = layout_in_circle( network )
 plot( network, layout = l )
 ```
 
+## Exercises
+
+-   Draw a network which you would use to describe the outcomes to the
+    organisation.
+-   Examine different layout algorithms and see how different they are.
+
+## Community detection
+
+Beyond visualizations, one can try to find communities (or clusters) of
+more dencly connected nodes from the materials. There are various
+community detection algorithms out there [see for
+example](https://www.rdocumentation.org/packages/igraph/versions/1.3.5/topics/membership),
+and they do produce somewhat different outcomes.
+
+```{r}
+communities <- cluster_optimal( network )
+V(network)$community <- membership( communities )
+
+print( V(network)$community )
+
+V(network)$color <- V(network)$community
+V(network)$size <- degree(network)
+
+E(network)$color <- 'green'
+
+l = layout_in_circle( network )
+
+plot( network, layout = l )
+```
+
+## Exercises
+
+-   Try out different clustering approaches: what kinds of insights they
+    provide to the data?
