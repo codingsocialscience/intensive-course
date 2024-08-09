@@ -1,0 +1,85 @@
+---
+title: An R Markdown document converted from "Simulation - system dynamics (R).ipynb"
+output: html_document
+---
+
+# Simulations: system dynamics
+
+System dynamics models work on stocks and flows between the stocks.
+To get an idea about this, see how [MONIAC](https://www.youtube.com/watch?v=rVOhYROKeu4) works.
+See the documentation of [deSolve](https://cran.r-project.org/web/packages/deSolve/index.html).
+
+```{r}
+library(deSolve)
+library(tidyverse)
+```
+
+```{r}
+## time starts from 0 and continues until 20
+
+time <- seq(0, 20, by=1)
+
+## we have three stocks (people healthy, people sick and people killed)
+
+stocks <- c( healthy = 900, sick = 100, killed = 0 )
+
+## model has parameters, such as infection rate amd kill rate
+
+auxs <- c( infection = .05, dead = 0.05 )
+```
+
+```{r}
+## here we define how each step is executed
+
+model <- function(time, stocks, auxs){
+  with(as.list(c(stocks, auxs)), {
+      
+    # we can modify parameters over time
+    # if( time >= 10 ) {
+    #     infection <- .00
+    # }
+
+    new_people_sick <- sick * infection
+    new_dead_people <- sick * dead
+      
+    healthy_change <- - new_people_sick
+    dead_change <- new_dead_people
+    sick_change <- - new_dead_people + new_people_sick
+
+    ## we update all three stocks and parameters
+    return (
+        list(
+            c( healthy_change, sick_change, dead_change ),
+            auxs
+        )
+    )
+  }) 
+}
+```
+
+```{r}
+## this runs the model
+data <- data.frame( dede( y = stocks, times = time, func = model, parms = auxs, method = "lsodar"))
+head( data )
+tail( data )
+```
+
+```{r}
+df <- data %>% 
+  pivot_longer(-time, names_to = 'variable')
+
+
+ggplot(df, aes(time, value, color = variable))+
+  geom_line(size =1.25)+
+  theme_minimal()
+```
+
+## Exercises
+
+1. Based on the model equation, draw a picture about the model (similar to Figure 6.2)
+1. Change the infection rate to 1.10 and dead rate to 0.05 and plot the results.
+1. Increase the time span by 10 more days.
+1. Examine how a stronger intervention (decreasing the infection rate more) impacts to number of patients and deadths. What do you see?
+1. Change the time of the intervention, what changes can you detect?
+1. Examine the timespan to 300 days. Why does the model break? Fix it so that it does not!
+
